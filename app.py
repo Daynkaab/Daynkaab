@@ -77,16 +77,49 @@ def home():
 @app.post("/")
 @app.post("/webhook")
 async def receive_whatsapp(request: Request):
-    """Acts as the endpoint receiver for GreenAPI notifications"""
+    """Receives GreenAPI WhatsApp webhook notifications."""
     data = await request.json()
 
     print("FULL WEBHOOK:", json.dumps(data, ensure_ascii=False))
     print("WEBHOOK TYPE:", data.get("typeWebhook"))
 
-    # Check if the notification contains a text message received event
-        if data.get("typeWebhook") == "incomingMessageReceived":
-        sender_data = data.get("senderData", {})
-        sender_id = sender_data.get("sender", "")  # e.g., '252xxxxxx@c.us'
+    if data.get("typeWebhook") != "incomingMessageReceived":
+        return {"status": "ignored: not an incoming message"}
+
+    sender_data = data.get("senderData", {})
+    sender_id = sender_data.get("sender", "")
+
+    message_data = data.get("messageData", {})
+    text_received = message_data.get(
+        "textMessageData", {}
+    ).get("textMessage", "")
+
+    print(f"📨 Incoming Live Message: {text_received}")
+
+    if not text_received:
+        return {"status": "ignored: no text message"}
+
+    try:
+        ai_result = parse_messy_somali(text_received)
+        print("🤖 Groq extracted:", ai_result)
+
+        db_status_reply = update_ledger(ai_result)
+        print("📒 Ledger:", db_status_reply)
+
+        send_whatsapp_reply(sender_id, db_status_reply)
+
+        return {
+            "status": "success",
+            "reply": db_status_reply
+        }
+
+    except Exception as error:
+        print("❌ WEBHOOK ERROR:", repr(error))
+
+        return {
+            "status": "error",
+            "message": str(error)
+        }
         
         # Security check: Only process messages coming directly from the shopkeeper
         if SHOPKEEPER_PHONE in sender_id:
