@@ -81,23 +81,35 @@ async def receive_whatsapp(request: Request):
     data = await request.json()
 
     print("FULL WEBHOOK:", json.dumps(data, ensure_ascii=False))
-    print("WEBHOOK TYPE:", data.get("typeWebhook"))
+    webhook_type = data.get("typeWebhook")
+    print("WEBHOOK TYPE:", webhook_type)
 
-    if data.get("typeWebhook") != "incomingMessageReceived":
-        return {"status": "ignored: not an incoming message"}
+    # Daynkaab accepts a command written by the connected shopkeeper phone.
+    # It can also accept ordinary incoming messages if needed later.
+    allowed_types = [
+        "outgoingMessageReceived",
+        "incomingMessageReceived"
+    ]
+
+    if webhook_type not in allowed_types:
+        return {"status": "ignored: unsupported webhook type"}
 
     sender_data = data.get("senderData", {})
     sender_id = sender_data.get("sender", "")
 
     message_data = data.get("messageData", {})
-    text_received = message_data.get(
-        "textMessageData", {}
-    ).get("textMessage", "")
 
-    print(f"📨 Incoming Live Message: {text_received}")
+    # GreenAPI can represent a written WhatsApp message in either format.
+    text_received = (
+        message_data.get("textMessageData", {}).get("textMessage")
+        or message_data.get("extendedTextMessageData", {}).get("text")
+        or ""
+    ).strip()
+
+    print(f"📨 Command received: {text_received}")
 
     if not text_received:
-        return {"status": "ignored: no text message"}
+        return {"status": "ignored: no text content"}
 
     try:
         ai_result = parse_messy_somali(text_received)
