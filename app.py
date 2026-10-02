@@ -64,13 +64,33 @@ def update_ledger(parsed_data):
         return f"✅ Created new profile for {name} with an initial balance of ${initial_balance}"
 
 def send_whatsapp_reply(chat_id, text_message):
-    """Sends a WhatsApp text message reply back using GreenAPI"""
-    url = f"https://green-api.com{GREEN_INSTANCE}/sendMessage/{GREEN_TOKEN}"
-    payload = {"chatId": chat_id, "message": text_message}
+    """Send a WhatsApp reply through GreenAPI."""
+
+    api_url = os.getenv("GREEN_API_URL")
+    instance_id = os.getenv("GREEN_INSTANCE_ID")
+    api_token = os.getenv("GREEN_API_TOKEN")
+
+    url = (
+        f"{api_url}/waInstance{instance_id}/"
+        f"sendMessage/{api_token}"
+    )
+
+    payload = {
+        "chatId": chat_id,
+        "message": text_message
+    }
+
     try:
-        requests.post(url, json=payload)
-    except Exception as e:
-        print(f"Error sending WhatsApp: {e}")
+        response = requests.post(url, json=payload, timeout=20)
+
+        print("GREENAPI URL:", url)
+        print("GREENAPI STATUS:", response.status_code)
+        print("GREENAPI RESPONSE:", response.text)
+
+        response.raise_for_status()
+
+    except requests.RequestException as error:
+        print(f"Error sending WhatsApp: {error}")
 @app.get("/")
 def home():
     return {"status": "Daynkaab live cloud engine is running!"}
