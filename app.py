@@ -71,7 +71,9 @@ def send_whatsapp_reply(chat_id, text_message):
         requests.post(url, json=payload)
     except Exception as e:
         print(f"Error sending WhatsApp: {e}")
-
+@app.get("/")
+def home():
+    return {"status": "Daynkaab live cloud engine is running!"}
 @app.post("/webhook")
 async def receive_whatsapp(request: Request):
     """Acts as the endpoint receiver for GreenAPI notifications"""
