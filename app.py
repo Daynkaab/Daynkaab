@@ -75,6 +75,7 @@ def send_whatsapp_reply(chat_id, text_message):
 def home():
     return {"status": "Daynkaab live cloud engine is running!"}
 @app.post("/")
+@app.post("/webhook")
 async def receive_whatsapp(request: Request):
     """Acts as the endpoint receiver for GreenAPI notifications"""
     data = await request.json()
