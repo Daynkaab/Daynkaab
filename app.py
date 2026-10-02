@@ -79,9 +79,12 @@ def home():
 async def receive_whatsapp(request: Request):
     """Acts as the endpoint receiver for GreenAPI notifications"""
     data = await request.json()
-    
+
+    print("FULL WEBHOOK:", json.dumps(data, ensure_ascii=False))
+    print("WEBHOOK TYPE:", data.get("typeWebhook"))
+
     # Check if the notification contains a text message received event
-    if data.get("typeWebhook") == "incomingMessageReceived":
+        if data.get("typeWebhook") == "incomingMessageReceived":
         sender_data = data.get("senderData", {})
         sender_id = sender_data.get("sender", "")  # e.g., '252xxxxxx@c.us'
         
